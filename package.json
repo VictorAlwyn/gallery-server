@@ -1,8 +1,9 @@
 {
   "scripts": {
-    "start": "cross-env NODE_ENV=dev nodemon src/index.ts",
+    "start:dev": "cross-env NODE_ENV=dev nodemon src/index.ts",
     "start:prod": "cross-env NODE_ENV=prod ts-node dist/index.js",
-    "build": "tsc -p ."
+    "build": "tsc -p .",
+    "start": "npm run build && npm run start:prod"
   },
   "dependencies": {
     "@types/express": "^4.17.13",
