@@ -4,6 +4,7 @@ import GalleryRouter from "./routers/gallery";
 import env from "./config/environment";
 import connection from "./config/connection";
 import validator from "./middleware/validator";
+import cors from "cors";
 
 const app = express();
 
@@ -19,6 +20,8 @@ const start = async (): Promise<void> => {
     } catch (error) {
       console.error("Unable to connect to the database:", error);
     }
+
+    app.use(cors());
 
     app.use(express.static(__dirname));
 
