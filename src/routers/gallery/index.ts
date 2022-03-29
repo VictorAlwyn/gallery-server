@@ -1,8 +1,10 @@
+import Ajv from "ajv";
 import { Router, Request, Response } from "express";
 import { Gallery } from "../../model/gallery-model";
-import validator from "../../middleware/validator";
 import schema from "./schemas";
 import uploader from "../../middleware/uploader";
+
+const ajv = new Ajv();
 
 const GalleryRouter = () => {
   const router = Router();
@@ -12,26 +14,29 @@ const GalleryRouter = () => {
     return res.status(200).json(allGallery);
   });
 
-  router.post(
-    "/",
-    validator.validate({ body: schema.add_gallery }),
-    async (req: Request, res: Response): Promise<Response> => {
+  router.post("/", async (req: Request, res: Response): Promise<Response> => {
+    const body = req.body;
+
+    const validate = ajv.compile(schema.add_gallery);
+
+    if (validate(body)) {
       const gallery: Gallery = await Gallery.create({ ...req.body });
       return res.status(201).json(gallery);
     }
-  );
+
+    return res.status(400).json(validate.errors);
+  });
 
   router.post(
     "/upload/:id",
     uploader.single("image"),
     async (req: Request, res: Response): Promise<Response> => {
       const { id } = req.params;
+      const image: any = req.file;
 
-      if (req.file == undefined) {
+      if (image === undefined) {
         return res.send(`You must select a image.`);
       }
-
-      const image: any = req.file;
 
       await Gallery.update({ image: image.location }, { where: { id } });
       const updatedGallery: Gallery | null = await Gallery.findByPk(id);
@@ -45,16 +50,20 @@ const GalleryRouter = () => {
     return res.status(200).json(gallery);
   });
 
-  router.put(
-    "/:id",
-    validator.validate({ body: schema.update_gallery }),
-    async (req: Request, res: Response): Promise<Response> => {
-      const { id } = req.params;
+  router.put("/:id", async (req: Request, res: Response): Promise<Response> => {
+    const { id } = req.params;
+    const body = req.body;
+
+    const validate = ajv.compile(schema.update_gallery);
+
+    if (validate(body)) {
       await Gallery.update({ ...req.body }, { where: { id } });
       const updatedGallery: Gallery | null = await Gallery.findByPk(id);
       return res.status(200).json(updatedGallery);
     }
-  );
+
+    return res.status(400).json(validate.errors);
+  });
 
   router.delete(
     "/:id",
